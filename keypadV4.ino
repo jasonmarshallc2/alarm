@@ -1,9 +1,7 @@
 /*
  * TODO
  * add switch to detect open doors
- * 
- * add alarm state status, armed, disarmed, countToArm, countToAlarm
- * if state = armed || door open detected sound buzzer
+ * Add button to disarm screen to arm the system
  */
 
 #include "Adafruit_Keypad.h"
@@ -204,7 +202,18 @@ int turnAlarmOff(){
   Serial.println("in turn alarm off");
   digitalWrite(redLed, HIGH);
   digitalWrite(greenLed, LOW);
-  
+  tft.fillScreen(GREEN);
+  tft.setCursor(10, 20);
+  tft.setTextSize(3);
+  tft.println(" ");
+  tft.println(" Disarmed");  
+  tft.println(" ");
+  tft.setTextColor(BLACK);  
+  tft.setTextSize(2);
+  tft.println("  Please wait for door      to unlock");
+  for(int z = 0; z <4; z++){
+   pwd[z] = {'z'};
+  }
   int melody2[] = {262, 262, 262, 262, 262, 262, 262, 262};
   int noteDurations2[] = {4, 4, 4, 4, 4, 4, 4, 4};
  
@@ -216,40 +225,14 @@ int turnAlarmOff(){
     delay(pauseBetweenNotes2);
     noTone(buzzer);
   }
-  tft.fillScreen(GREEN);
-  tft.setCursor(10, 20);
-  tft.setTextSize(3);
-  tft.println(" ");
-  tft.println(" Disarmed");  
-  tft.println(" ");
-  tft.setTextColor(BLACK);  
-  tft.setTextSize(2);
-//  tft.setCursor(10,10);
-  tft.println("  Please wait for door      to unlock");
-  for(int z = 0; z <4; z++){
-   pwd[z] = {'z'};
-  }
   i=0;
-  
-  return 0;
+    return 0;
 }
 
 int turnAlarmOn(){
   Serial.println("in turn alarm on");
   digitalWrite(greenLed, LOW);
   digitalWrite(redLed, HIGH);
-
-  int noteDurations[] = {4, 8, 8, 4, 4, 4, 4, 4};
-  int melody[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};
-  // play tone to indicate alarm is set
-  for (int thisNote = 0; thisNote < 8; thisNote++) {
-    int noteDuration = 1000 / noteDurations[thisNote];
-    tone(buzzer, melody[thisNote], noteDuration);
-    int pauseBetweenNotes = noteDuration * 1.30;
-    delay(pauseBetweenNotes);
-    noTone(buzzer);
-  }
-  //tft.fillScreen(BLACK);
   tft.fillRect(0, 0, 320, 240, BLUE);
   tft.fillRect(10, 10, 300, 220, RED);
   tft.setTextColor(BLACK);  
@@ -264,5 +247,15 @@ int turnAlarmOn(){
   for(int z = 0; z <4; z++){
    pwd[z] = {'z'};
   }
+  int noteDurations[] = {4, 8, 8, 4, 4, 4, 4, 4};
+  int melody[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};
+  // play tone to indicate alarm is set
+  for (int thisNote = 0; thisNote < 8; thisNote++) {
+    int noteDuration = 1000 / noteDurations[thisNote];
+    tone(buzzer, melody[thisNote], noteDuration);
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    noTone(buzzer);
+  }  
   return 1;
 }

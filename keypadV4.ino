@@ -1,3 +1,7 @@
+//#include <Adafruit_TFTLCD.h>
+//#include <pin_magic.h>
+//#include <registers.h>
+
 /*
  * TODO
  * add switch to detect open doors
@@ -5,9 +9,12 @@
  */
 
 #include "Adafruit_Keypad.h"
+#include <TouchScreen.h>
 #include <Elegoo_GFX.h>    // Core graphics library
 #include <Elegoo_TFTLCD.h> // Hardware-specific library
 #include "pitches.h"
+//#include <MCUFRIEND_kbv.h>
+//#include <Adafruit_GFX.h>
 #define KEYPAD_PID3844
 #define R1    30 //orig 2
 #define R2    32 // orig 3
@@ -30,10 +37,7 @@ char pwd[5];
 int loopCycle = 1;
 int i = 0;
 int invalidPwdCount = 0;
-
-
-
-
+int touch = 0;
 //initialize an instance of class NewKeypad
 Adafruit_Keypad customKeypad = Adafruit_Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
@@ -55,8 +59,33 @@ Adafruit_Keypad customKeypad = Adafruit_Keypad( makeKeymap(keys), rowPins, colPi
 #define MAGENTA 0xF81F
 #define YELLOW  0xFFE0
 #define WHITE   0xFFFF
+//#define YP A1
+//#define XM A2
+//#define YM 7
+//#define XP 6
+#define YP A3  // must be an analog pin, use "An" notation!
+#define XM A2  // must be an analog pin, use "An" notation!
+#define YM 9   // can be a digital pin
+#define XP 8   // can be a digital pin
 
+//#define TS_MINX 940
+//#define TS_MINY 160
+//#define TS_MAXX 160
+//#define TS_MAXY 970
+
+#define TS_MINX 120
+#define TS_MAXX 900
+#define TS_MINY 70
+#define TS_MAXY 920
+
+TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+//Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+
+#define BOXSIZE 40
+#define PENRADIUS 3
+#define MINPRESSURE 10
+#define MAXPRESSURE 1000
 
 void setup() {
   Serial.begin(9600);
@@ -66,7 +95,7 @@ void setup() {
   pinMode(doorSwitch, INPUT);
   pinMode(windowSwitch, INPUT);
   pinMode(armSwitch, INPUT);
-
+  pinMode(13, OUTPUT);
   customKeypad.begin();
   Serial.println(F("TFT LCD test"));
 
@@ -127,28 +156,55 @@ void loop() {
     systemStatus = turnAlarmOn();
     loopCycle ++;
   }
+
+//  digitalWrite(13, HIGH);
+  TSPoint p = ts.getPoint();
+//  digitalWrite(13, LOW);
+
+  pinMode(XM, OUTPUT);
+  pinMode(YP, OUTPUT);
+//  Serial.print("p.z ");
+//  Serial.println(p.z);
+//  Serial.print("p.y ");
+//  Serial.println(p.y);
+
+
+//Serial.println("just before pressure test");
   
-/*  
-  // Display welcome message
-  if (systemStatus == 0){ // disarmed
-
-  } else if(systemStatus == 1){ // armed
-    tft.setTextColor(WHITE);  
-    tft.setTextSize(3);
-    tft.setCursor(0,0);
-    tft.println("System Armed");
-    tft.setTextColor(RED);  
-    tft.println("Enter Password");
-    digitalWrite(greenLed, LOW);
-    digitalWrite(redLed, HIGH);
+  if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
+    p.x = map(p.x, TS_MINX, TS_MAXX, tft.width(), 0);
+    p.y = map(p.y, TS_MINY, TS_MAXY, tft.height(), 0);
+    Serial.print("("); Serial.print(p.x);
+    Serial.print(", "); Serial.print(p.y);
+    Serial.println(")");
+//    if (p.x > 0 && p.x < 120) {
+//      if (p.y > 0 && p.y < 120) {
+    if (p.x > 200 && p.x < 320) {
+      if (p.y > 40 && p.y < 220) {
+        touch = 1;
+      }
+    }
+    if (p.x > 120 && p.x < 240) {
+      if (p.y > 0 && p.y < 120) {
+        touch = 2;
+      }
+    }
+    
   }
-*/
+  if (touch == 1) {
+    systemStatus = turnAlarmOn();
+    touch = 0;
+  }
 
+
+
+
+  
   tft.setTextSize(1);
   tft.setTextColor(WHITE);
   tft.setCursor(200, 100);
-  tft.print("System Status ");
-  tft.println(systemStatus);
+//  tft.print("System Status ");
+//  tft.println(systemStatus);
   //Serial.print("System Status ");
   //Serial.println(systemStatus);
   
@@ -173,18 +229,6 @@ void loop() {
   // When pwd matches, process
   if(String(pwd) == correctPwd){
     systemStatus = turnAlarmOff();
-
-  }
-  else if(i>=4){
-    // TODO fix this logic
-    Serial.println("Fucking moron!");
-    invalidPwdCount++;
-    //wrongPwdTimer = millis(); //start timer to lock system 
-    for(int z = 0; z <4; z++){
-     pwd[z] = {'z'};
-    }
-    i=0;
-    soundAlarm();
   }
 
   // process alarm turn on switch
@@ -211,6 +255,15 @@ int turnAlarmOff(){
   tft.setTextColor(BLACK);  
   tft.setTextSize(2);
   tft.println("  Please wait for door      to unlock");
+  
+  tft.fillRect(40, 150, 250, 50, WHITE);
+  tft.drawRoundRect(40, 150, 250, 50, 6, RED);
+  tft.drawRoundRect(39, 149, 252, 52, 6, RED);
+  tft.drawRoundRect(38, 148, 254, 54, 6, RED);
+  tft.setCursor(80, 165);
+  tft.setTextSize(3);
+  tft.println("SET ALARM");  
+  
   for(int z = 0; z <4; z++){
    pwd[z] = {'z'};
   }
@@ -230,14 +283,13 @@ int turnAlarmOff(){
 }
 
 int turnAlarmOn(){
-  Serial.println("in turn alarm on");
   digitalWrite(greenLed, LOW);
   digitalWrite(redLed, HIGH);
   tft.fillRect(0, 0, 320, 240, BLUE);
   tft.fillRect(10, 10, 300, 220, RED);
   tft.setTextColor(BLACK);  
   tft.setTextSize(3);
-  tft.setCursor(15,15);
+  tft.setCursor(25,40);
   tft.println("System is Armed");
   tft.println(" ");
   tft.setTextColor(WHITE);

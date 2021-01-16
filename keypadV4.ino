@@ -1,7 +1,3 @@
-//#include <Adafruit_TFTLCD.h>
-//#include <pin_magic.h>
-//#include <registers.h>
-
 /*
  * TODO
  * add switch to detect open doors
@@ -13,8 +9,6 @@
 #include <Elegoo_GFX.h>    // Core graphics library
 #include <Elegoo_TFTLCD.h> // Hardware-specific library
 #include "pitches.h"
-//#include <MCUFRIEND_kbv.h>
-//#include <Adafruit_GFX.h>
 #define KEYPAD_PID3844
 #define R1    30 //orig 2
 #define R2    32 // orig 3
@@ -59,19 +53,10 @@ Adafruit_Keypad customKeypad = Adafruit_Keypad( makeKeymap(keys), rowPins, colPi
 #define MAGENTA 0xF81F
 #define YELLOW  0xFFE0
 #define WHITE   0xFFFF
-//#define YP A1
-//#define XM A2
-//#define YM 7
-//#define XP 6
 #define YP A3  // must be an analog pin, use "An" notation!
 #define XM A2  // must be an analog pin, use "An" notation!
 #define YM 9   // can be a digital pin
 #define XP 8   // can be a digital pin
-
-//#define TS_MINX 940
-//#define TS_MINY 160
-//#define TS_MAXX 160
-//#define TS_MAXY 970
 
 #define TS_MINX 120
 #define TS_MAXX 900
@@ -80,7 +65,6 @@ Adafruit_Keypad customKeypad = Adafruit_Keypad( makeKeymap(keys), rowPins, colPi
 
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
-//Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
 #define BOXSIZE 40
 #define PENRADIUS 3
@@ -163,22 +147,13 @@ void loop() {
 
   pinMode(XM, OUTPUT);
   pinMode(YP, OUTPUT);
-//  Serial.print("p.z ");
-//  Serial.println(p.z);
-//  Serial.print("p.y ");
-//  Serial.println(p.y);
 
-
-//Serial.println("just before pressure test");
-  
   if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
     p.x = map(p.x, TS_MINX, TS_MAXX, tft.width(), 0);
     p.y = map(p.y, TS_MINY, TS_MAXY, tft.height(), 0);
     Serial.print("("); Serial.print(p.x);
     Serial.print(", "); Serial.print(p.y);
     Serial.println(")");
-//    if (p.x > 0 && p.x < 120) {
-//      if (p.y > 0 && p.y < 120) {
     if (p.x > 200 && p.x < 320) {
       if (p.y > 40 && p.y < 220) {
         touch = 1;
@@ -196,17 +171,9 @@ void loop() {
     touch = 0;
   }
 
-
-
-
-  
   tft.setTextSize(1);
   tft.setTextColor(WHITE);
   tft.setCursor(200, 100);
-//  tft.print("System Status ");
-//  tft.println(systemStatus);
-  //Serial.print("System Status ");
-  //Serial.println(systemStatus);
   
   // Maximum bad attempt count that will pause system or ??
   if (invalidPwdCount >2){  //check invalid pwd count to pause logic if needed
